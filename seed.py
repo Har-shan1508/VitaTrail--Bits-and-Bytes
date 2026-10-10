@@ -3,8 +3,8 @@ always looks fresh. Every record goes through the real pipeline: classify, encry
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
-from . import crypto, records
-from .db import TABLES
+import crypto, records
+from db import TABLES
 
 PASSWORD = "demo123"
 HOSPITALS = [  # id, name, kind, login
