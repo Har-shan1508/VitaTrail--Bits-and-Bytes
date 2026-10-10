@@ -9,8 +9,8 @@ import json
 import uuid
 from datetime import datetime, timezone
 
-from . import crypto, meds
-from .classify import RECORD_TYPES, classify
+import crypto, meds
+from classify import RECORD_TYPES, classify
 
 TEXT_FIELDS = {
     "consultation": ["diagnosis", "notes", "allergies"],
