@@ -3,7 +3,7 @@ import sqlite3
 
 from flask import g
 
-from .config import DB_PATH
+from config import DB_PATH
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS hospitals(
