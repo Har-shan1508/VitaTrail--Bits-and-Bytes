@@ -7,9 +7,9 @@ from flask import Flask, abort, g, jsonify, request, send_from_directory
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import alerts, config, crypto, meds, records, seed, shares
-from .classify import CATEGORIES, RECORD_TYPES, classify
-from .db import close_db, connect, get_db, init_db
+import alerts, config, crypto, meds, records, seed, shares
+from classify import CATEGORIES, RECORD_TYPES, classify
+from db import close_db, connect, get_db, init_db
 
 app = Flask(__name__, static_folder=str(config.FRONTEND_DIR), static_url_path="/static")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
