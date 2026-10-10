@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VitaTrail - Universal Health Record & Safety Vault</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #10b981;
+      --tier1: #0369a1;
+      --tier2: #b45309;
+      --tier3: #be185d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 3rem; }
+    
+    header { background: #fff; border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;}
+    .brand { font-size: 1.25rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+    
+    .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    
+    .nav-tabs { display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; overflow-x: auto;}
+    .nav-tab { padding: 0.75rem 1.25rem; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; color: var(--muted); white-space: nowrap;}
+    .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .btn:hover { background: var(--primary-dark); }
+    .btn-secondary { background: #e2e8f0; color: var(--text); }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .btn-danger { background: var(--danger); }
+    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.85rem; }
+    
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; }
+    
+    .alert-item { padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 0.75rem; border-left: 4px solid var(--warning); background: #fffbe2; }
+    .alert-item.high { border-left-color: var(--danger); background: #fef2f2; }
+    
+    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+    .tier-1 { background: #e0f2fe; color: var(--tier1); }
+    .tier-2 { background: #fef3c7; color: var(--tier2); }
+    .tier-3 { background: #fce7f3; color: var(--tier3); }
+
+    .hidden { display: none !important; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+    
+    .dose-grid { display: flex; gap: 0.25rem; margin-top: 0.5rem; }
+    .dose-dot { width: 14px; height: 14px; border-radius: 3px; background: #cbd5e1; }
+    .dose-dot.full { background: var(--success); }
+    .dose-dot.partial { background: var(--warning); }
+    .dose-dot.missed { background: var(--danger); }
+    .dose-dot.today { border: 2px solid var(--primary); background: #fff; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand"><i class="fa-solid fa-shield-halved"></i> VitaTrail</div>
+    <div id="userBar" class="hidden">
+      <span id="displayName" style="font-weight: 600; margin-right: 1rem;"></span>
+      <button class="btn btn-secondary btn-sm" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- LOGIN PANEL -->
+    <div id="loginCard" class="card" style="max-width: 420px; margin: 3rem auto;">
+      <h2 style="margin-bottom: 1rem; text-align: center;">Sign In</h2>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="username" placeholder="e.g. ravi, meera, citygeneral" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" value="demo123" required />
+        </div>
+        <button type="submit" class="btn" style="width: 100%; justify-content: center;">Sign In</button>
+      </form>
+      <div style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 1rem;">
+        <strong>Demo Accounts (Password: demo123):</strong><br/>
+        • Patient: <code>ravi</code> or <code>meera</code><br/>
+        • Hospital / Clinic: <code>citygeneral</code>, <code>sunrise</code>, <code>lakeview</code>
+      </div>
+    </div>
+
+    <!-- PATIENT PORTAL -->
+    <div id="patientPortal" class="hidden">
+      <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchPatientTab('vault')">Records & Alerts</button>
+        <button class="nav-tab" onclick="switchPatientTab('meds')">Medicine Tracker</button>
+        <button class="nav-tab" onclick="switchPatientTab('shares')">Doctor Sharing</button>
+        <button class="nav-tab" onclick="switchPatientTab('camps')">Health Radar</button>
+      </div>
+
+      <!-- TAB: VAULT -->
+      <div id="pTabVault">
+        <div class="card">
+          <h2 id="pName">Patient Record Vault</h2>
+          <p id="pMeta" style="color: var(--muted); font-size: 0.9rem;"></p>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-triangle-exclamation" style="color: var(--warning);"></i> Active Safety Alerts</h3>
+          <div id="vaultAlerts" style="margin-top: 1rem;">Scanning records...</div>
+        </div>
+
+        <div class="card">
+          <h3>Encrypted Health Records</h3>
+          <div id="vaultRecords" style="margin-top: 1rem;">Loading health records...</div>
+        </div>
+      </div>
+
+      <!-- TAB: MEDS -->
+      <div id="pTabMeds" class="hidden">
+        <div class="card">
+          <h3>Active Prescriptions & Course Tracking</h3>
+          <div id="medsList" style="margin-top: 1rem;">Loading medications...</div>
+        </div>
+      </div>
+
+      <!-- TAB: SHARES -->
+      <div id="pTabShares" class="hidden">
+        <div class="card">
+          <h3>Create Access Link for Doctor</h3>
+          <form onsubmit="handleCreateShare(event)" style="margin-top: 1rem;">
+            <div class="form-group">
+              <label>Doctor / Specialty Label</label>
+              <input type="text" id="shareLabel" placeholder="e.g. Dr. Sharma (Cardiologist)" required />
+            </div>
+            <div class="grid">
+              <div class="form-group">
+                <label>Validity (Hours)</label>
+                <input type="number" id="shareHours" value="24" min="1" max="336" required />
+              </div>
+              <div class="form-group">
+                <label>History Duration</label>
+                <select id="shareMonths">
+                  <option value="3">Last 3 Months</option>
+                  <option value="12" selected>Last 12 Months</option>
+                  <option value="0">All Time</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label><input type="checkbox" id="shareTier3" /> Include Restricted Records (Requires 6-digit PIN)</label>
+            </div>
+            <button type="submit" class="btn">Generate Secure Link</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3>Active Doctor Links</h3>
+          <div id="sharesList" style="margin-top: 1rem;">Loading links...</div>
+        </div>
+      </div>
+
+      <!-- TAB: CAMPS (RADAR) -->
+      <div id="pTabCamps" class="hidden">
+        <div class="card">
+          <h3><i class="fa-solid fa-map-location-dot" style="color: var(--primary);"></i> Community Health Camp Radar</h3>
+          <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">Personalized alerts for free screenings and check-up drives based on your active chronic conditions.</p>
+          <div id="campsList">Scanning for nearby camps...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- HOSPITAL PORTAL -->
+    <div id="hospitalPortal" class="hidden">
+      <div class="card">
+        <h2 id="hName">Hospital Portal</h2>
+        <p id="hMeta" style="color: var(--muted); font-size: 0.9rem;"></p>
+      </div>
+
+      <div class="card">
+        <h3>Issue New Health Record</h3>
+        <div style="display: flex; gap: 0.5rem; margin: 1rem 0;">
+          <input type="text" id="hSearchId" placeholder="Enter Patient Health ID (e.g. VT-1001)" />
+          <button class="btn" onclick="lookupPatient()">Lookup Patient</button>
+        </div>
+        
+        <div id="hPatientCard" class="hidden card" style="background: #f1f5f9; border: 1px solid var(--border);"></div>
+
+        <form id="issueRecordForm" class="hidden" onsubmit="handleIssueRecord(event)" style="margin-top: 1rem;">
+          <div class="grid">
+            <div class="form-group">
+              <label>Record Type</label>
+              <select id="rType">
+                <option value="prescription">Prescription</option>
+                <option value="lab">Lab Report</option>
+                <option value="consultation">Consultation Note</option>
+                <option value="vitals">Vitals</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Record Title</label>
+              <input type="text" id="rTitle" placeholder="e.g. Routine Diabetes Review" required />
+            </div>
+          </div>
+
+          <div id="prescriptionFields">
+            <div class="form-group">
+              <label>Medication Name</label>
+              <input type="text" id="medName" placeholder="e.g. Metformin" />
+            </div>
+            <div class="grid">
+              <div class="form-group"><label>Dose</label><input type="text" id="medDose" placeholder="500 mg" /></div>
+              <div class="form-group"><label>Times / Day</label><input type="number" id="medTimes" value="2" /></div>
+              <div class="form-group"><label>Days</label><input type="number" id="medDays" value="30" /></div>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-secondary" onclick="runPrecheck()" style="margin-bottom: 1rem;">
+            <i class="fa-solid fa-shield-cat"></i> Run Pre-Check Safety Scan
+          </button>
+          
+          <div id="precheckResults" class="hidden" style="margin-bottom: 1rem;"></div>
+
+          <button type="submit" class="btn" style="width: 100%; justify-content: center;">Sign & Issue Record</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Recently Issued Records & Digital Signatures</h3>
+        <div id="issuedList" style="margin-top: 1rem;">Loading...</div>
+      </div>
+    </div>
+
+    <!-- DOCTOR VIEW (PUBLIC VIA LINK) -->
+    <div id="doctorView" class="hidden">
+      <div class="card">
+        <h2 id="dPatientName">Shared Records</h2>
+        <p id="dScopeLabel" style="color: var(--muted);"></p>
+        <div id="pinSection" class="hidden" style="margin-top: 1rem; padding: 1rem; background: #fffbe2; border-radius: 6px;">
+          <p><strong><i class="fa-solid fa-lock"></i> Restricted Records Locked:</strong> Enter the 6-digit PIN provided by the patient to decrypt sensitive records.</p>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <input type="text" id="pinInput" placeholder="6-digit PIN" maxlength="6" style="width: 140px;" />
+            <button class="btn btn-sm" onclick="submitPin()">Unlock</button>
+          </div>
+          <p id="pinError" style="color: var(--danger); font-size: 0.85rem; margin-top: 0.25rem;"></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Safety Summary</h3>
+        <div id="dSummary"></div>
+      </div>
+
+      <div class="card">
+        <h3>Clinical Timeline</h3>
+        <div id="dTimeline"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let token = localStorage.getItem('token');
+    let role = localStorage.getItem('role');
+    let currentShareToken = null;
+    let selectedHealthId = null;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    async function api(path, method = 'GET', body = null, customHeaders = {}) {
+      const headers = { 'Content-Type': 'application/json', ...customHeaders };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const opts = { method, headers };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(path, opts);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      try {
+        const res = await api('/api/auth/login', 'POST', {
+          username: document.getElementById('username').value,
+          password: document.getElementById('password').value
+        });
+        token = res.token;
+        role = res.role;
+        localStorage.setItem('token', token);
+        localStorage.setItem('role', role);
+        localStorage.setItem('name', res.name);
+        init();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function logout() {
+      localStorage.clear();
+      token = null;
+      role = null;
+      location.href = '/';
+    }
+
+    async function init() {
+      const path = window.location.pathname;
+      if (path.startsWith('/s/')) {
+        currentShareToken = path.split('/s/')[1];
+        loadDoctorView();
+        return;
+      }
+
+      if (!token) {
+        document.getElementById('loginCard').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('loginCard').classList.add('hidden');
+      document.getElementById('userBar').classList.remove('hidden');
+      document.getElementById('displayName').innerText = localStorage.getItem('name');
+
+      if (role === 'patient') {
+        document.getElementById('patientPortal').classList.remove('hidden');
+        loadVault();
+      } else if (role === 'hospital') {
+        document.getElementById('hospitalPortal').classList.remove('hidden');
+        loadHospitalInfo();
+      }
+    }
+
+    /* --- PATIENT FUNCTIONS --- */
+    function switchPatientTab(tab) {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('pTabVault').classList.add('hidden');
+      document.getElementById('pTabMeds').classList.add('hidden');
+      document.getElementById('pTabShares').classList.add('hidden');
+      document.getElementById('pTabCamps').classList.add('hidden');
+
+      if (tab === 'vault') { document.getElementById('pTabVault').classList.remove('hidden'); loadVault(); }
+      if (tab === 'meds') { document.getElementById('pTabMeds').classList.remove('hidden'); loadMeds(); }
+      if (tab === 'shares') { document.getElementById('pTabShares').classList.remove('hidden'); loadShares(); }
+      if (tab === 'camps') { document.getElementById('pTabCamps').classList.remove('hidden'); loadCamps(); }
+    }
+
+    async function loadVault() {
+      try {
+        const data = await api(`/api/patient/vault?today=${todayStr}`);
+        document.getElementById('pName').innerText = data.patient.name;
+        document.getElementById('pMeta').innerText = `Health ID: ${data.patient.health_id} | Blood Group: ${data.patient.blood_group} | Age: ${data.patient.age}`;
+        
+        const aEl = document.getElementById('vaultAlerts');
+        if (!data.alerts.length) {
+          aEl.innerHTML = '<p style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> No active medicine interactions or duplicate test warnings detected.</p>';
+        } else {
+          aEl.innerHTML = data.alerts.map(a => `
+            <div class="alert-item ${a.severity}">
+              <strong>${a.title}</strong>
+              <p style="font-size: 0.9rem;">${a.detail}</p>
+            </div>
+          `).join('');
+        }
+
+        const rEl = document.getElementById('vaultRecords');
+        rEl.innerHTML = data.records.map(r => `
+          <div style="border-bottom: 1px solid var(--border); padding: 1rem 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>${r.title}</strong>
+              <span class="badge tier-${r.tier}">Tier ${r.tier}</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem;">
+              Date: ${r.date} | Issued by: ${r.hospital.name} | Category: ${r.category}
+            </div>
+          </div>
+        `).join('');
+      } catch (err) { alert(err.message); }
+    }
+
+    async function loadMeds() {
+      try {
+        const data = await api(`/api/patient/meds?today=${todayStr}`);
+        const el = document.getElementById('medsList');
+        el.innerHTML = data.plans.map(p => `
+          <div style="border-bottom: 1px solid var(--border); padding: 1rem 0;">
+            <div style="display: flex; justify-content: space-between;">
+              <strong>${p.name} (${p.dose})</strong>
+              <span style="font-size: 0.85rem; font-weight: 600;">Adherence: ${p.adherence || 100}%</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--muted);">${p.instructions} | ${p.hospital}</p>
+            <div class="dose-grid">
+              ${p.grid.map(g => `<div class="dose-dot ${g.s}" title="${g.d}:${g.s}"></div>`).join('')}
+            </div>
+            ${p.today.length ? `
+              <div style="margin-top: 0.5rem;">
+                ${p.today.map(t => `
+                  <button class="btn btn-sm ${t.taken ? 'btn-secondary' : ''}" onclick="toggleDose('${p.id}', ${t.slot}, ${!t.taken})">
+                    ${t.taken ? '✓ Dose ' + (t.slot+1) + ' Taken' : 'Mark Dose ' + (t.slot+1) + ' Taken'}
+                  </button>
+                `).join(' ')}
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+      } catch (err) { alert(err.message); }
+    }
+
+    async function toggleDose(planId, slot, taken) {
+      await api('/api/patient/doses', 'POST', { plan_id: planId, day: todayStr, slot, taken });
+      loadMeds();
+    }
+
+    async function loadShares() {
+      const data = await api('/api/patient/shares');
+      document.getElementById('sharesList').innerHTML = data.map(s => `
+        <div style="border-bottom: 1px solid var(--border); padding: 0.75rem 0; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong>${s.label}</strong>
+            <div style="font-size: 0.8rem; color: var(--muted);">Status: ${s.status} | Views: ${s.views}</div>
+            ${s.url ? `<input type="text" readonly value="${s.url}" style="font-size: 0.75rem; width: 280px;" onclick="this.select()" />` : ''}
+          </div>
+          ${s.status === 'active' ? `<button class="btn btn-danger btn-sm" onclick="revokeShare('${s.id}')">Revoke</button>` : ''}
+        </div>
+      `).join('');
+    }
+
+    async function handleCreateShare(e) {
+      e.preventDefault();
+      const body = {
+        label: document.getElementById('shareLabel').value,
+        hours: parseInt(document.getElementById('shareHours').value),
+        months: parseInt(document.getElementById('shareMonths').value),
+        include_tier3: document.getElementById('shareTier3').checked,
+        categories: ['general', 'diabetes', 'cardiology', 'respiratory', 'orthopedics']
+      };
+      const res = await api('/api/patient/shares', 'POST', body);
+      if (res.pin) alert(`Link created! Tier 3 PIN is: ${res.pin}`);
+      loadShares();
+    }
+
+    async function revokeShare(id) {
+      await api(`/api/patient/shares/${id}`, 'DELETE');
+      loadShares();
+    }
+
+    async function loadCamps() {
+      try {
+        const data = await api('/api/patient/camps');
+        const el = document.getElementById('campsList');
+        if (!data.camps || data.camps.length === 0) {
+          el.innerHTML = '<p style="color: var(--success);"><i class="fa-solid fa-check"></i> No specific health camps match your chronic conditions at this time.</p>';
+          return;
+        }
+        el.innerHTML = data.camps.map(c => `
+          <div style="border: 1px solid var(--border); border-left: 4px solid var(--success); border-radius: 6px; padding: 1rem; margin-bottom: 1rem; background: #f8fafc;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <strong>${c.title}</strong>
+              <span class="badge" style="background: #dcfce7; color: #166534;">Recommended Match</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem;">
+              <div style="margin-bottom: 0.25rem;"><i class="fa-regular fa-calendar"></i> Date: ${c.date.split('T')[0]}</div>
+              <div><i class="fa-solid fa-location-dot"></i> Location: ${c.location}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) { alert(err.message); }
+    }
+
+    /* --- HOSPITAL FUNCTIONS --- */
+    async function loadHospitalInfo() {
+      const me = await api('/api/hospital/me');
+      document.getElementById('hName').innerText = me.name;
+      document.getElementById('hMeta').innerText = `Type: ${me.kind.toUpperCase()} | Fingerprint: ${me.fingerprint}`;
+      loadIssuedRecords();
+    }
+
+    async function lookupPatient() {
+      const hid = document.getElementById('hSearchId').value;
+      try {
+        const data = await api(`/api/hospital/patients/${hid}`);
+        selectedHealthId = hid;
+        const card = document.getElementById('hPatientCard');
+        card.classList.remove('hidden');
+        card.innerHTML = `
+          <h4>${data.patient.name} (${data.patient.health_id})</h4>
+          <p style="font-size: 0.85rem;">Age: ${data.patient.age} | Sex: ${data.patient.sex} | Blood: ${data.patient.blood_group}</p>
+          <p style="font-size: 0.85rem;">Known Allergies: ${data.allergies.join(', ') || 'None'}</p>
+        `;
+        document.getElementById('issueRecordForm').classList.remove('hidden');
+      } catch (err) { alert(err.message); }
+    }
+
+    async function runPrecheck() {
+      const body = {
+        health_id: selectedHealthId,
+        medications: [document.getElementById('medName').value],
+        tests: []
+      };
+      const data = await api('/api/hospital/precheck', 'POST', body);
+      const el = document.getElementById('precheckResults');
+      el.classList.remove('hidden');
+      if (!data.alerts.length) {
+        el.innerHTML = '<p style="color: var(--success); font-size: 0.85rem;">✓ Pre-check clear: No conflicts detected.</p>';
+      } else {
+        el.innerHTML = data.alerts.map(a => `<div class="alert-item ${a.severity}"><strong>Pre-check Warning: ${a.title}</strong><p>${a.detail}</p></div>`).join('');
+      }
+    }
+
+    async function handleIssueRecord(e) {
+      e.preventDefault();
+      const body = {
+        health_id: selectedHealthId,
+        record_type: document.getElementById('rType').value,
+        title: document.getElementById('rTitle').value,
+        record_date: todayStr,
+        data: {
+          medications: [{
+            name: document.getElementById('medName').value,
+            dose: document.getElementById('medDose').value,
+            times: parseInt(document.getElementById('medTimes').value),
+            days: parseInt(document.getElementById('medDays').value)
+          }]
+        }
+      };
+      await api('/api/hospital/records', 'POST', body);
+      alert('Record cryptographically signed & issued successfully!');
+      loadIssuedRecords();
+    }
+
+    async function loadIssuedRecords() {
+      const data = await api('/api/hospital/records');
+      document.getElementById('issuedList').innerHTML = data.map(r => `
+        <div style="border-bottom: 1px solid var(--border); padding: 0.5rem 0; font-size: 0.85rem;">
+          <strong>${r.title}</strong> - ${r.patient} (${r.health_id})
+          <div>Integrity Signature Status: <span style="color: ${r.integrity === 'ok' ? 'var(--success)' : 'var(--danger)'};">${r.integrity}</span></div>
+        </div>
+      `).join('');
+    }
+
+    /* --- DOCTOR VIEW FUNCTIONS --- */
+    async function loadDoctorView(pin = null) {
+      document.getElementById('doctorView').classList.remove('hidden');
+      const headers = pin ? { 'X-Share-Pin': pin } : {};
+      try {
+        const data = await api(`/api/shared/${currentShareToken}?today=${todayStr}`, 'GET', null, headers);
+        document.getElementById('dPatientName').innerText = `Patient Records: ${data.patient.name}`;
+        document.getElementById('dScopeLabel').innerText = `Shared under profile: ${data.label}`;
+
+        if (data.pin && data.pin.required && !data.pin.unlocked) {
+          document.getElementById('pinSection').classList.remove('hidden');
+          if (data.pin.error) document.getElementById('pinError').innerText = data.pin.error;
+        } else {
+          document.getElementById('pinSection').classList.add('hidden');
+        }
+
+        document.getElementById('dSummary').innerHTML = `
+          <p><strong>Allergies:</strong> ${data.summary.allergies.join(', ') || 'None'}</p>
+          <p><strong>Conditions:</strong> ${data.summary.conditions.join(', ') || 'None'}</p>
+        `;
+
+        document.getElementById('dTimeline').innerHTML = data.records.map(r => `
+          <div style="border-bottom: 1px solid var(--border); padding: 0.75rem 0;">
+            <strong>${r.title}</strong> (${r.date})
+            <p style="font-size: 0.85rem; color: var(--muted);">${r.hospital.name}</p>
+          </div>
+        `).join('');
+
+      } catch (err) { alert(err.message); }
+    }
+
+    function submitPin() {
+      const pin = document.getElementById('pinInput').value;
+      loadDoctorView(pin);
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
