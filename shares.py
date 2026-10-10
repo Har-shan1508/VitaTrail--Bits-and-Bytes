@@ -12,8 +12,8 @@ from datetime import datetime, timedelta, timezone
 import jwt
 from flask import abort
 
-from . import alerts, config, crypto, records
-from .classify import CATEGORIES, SENSITIVE
+import alerts, config, crypto, records
+from classify import CATEGORIES, SENSITIVE
 
 ALLOWED_MONTHS = (0, 1, 3, 6, 12)
 PRESETS = [  # smart defaults by specialty: the patient doesn't have to decide what is relevant
